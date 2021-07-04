@@ -13,7 +13,7 @@ function Disable-IEESC {
     Write-Host "IE Enhanced Security Configuration (ESC) has been disabled." -ForegroundColor Green
     }
 Disable-IEESC
-#remove wrong gateway, and bypass confirmation step
+#remove wrong gateway
 Remove-NetRoute -NextHop "10.60.60.1" -Confirm:$false
 #disable New Network Window
 reg ADD HKLM\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff /f
@@ -21,20 +21,31 @@ reg ADD HKLM\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff /f
 netsh advfirewall set allprofiles state off
 #create directory/file 
 New-Item -ItemType directory -Path C:\Users\Administrator\Documents\MaybeHere
-For ($i=1; $i -le 10; $i++) {
+For ($i=1; $i -le 11; $i++) {
     New-Item -ItemType directory -Path C:\Users\Administrator\Documents\OrHere-$i
     New-Item -ItemType file -Path C:\Users\Administrator\Documents\OrHere-$i\README.txt
-    "well it's not here " | Out-File -FilePath "C:\Users\Administrator\Documents\OrHere-$i\README.txt"
+    "Well, it is not here. " | Out-File -FilePath "C:\Users\Administrator\Documents\OrHere-$i\README.txt"
     }
-'I am here!' | Out-File -FilePath 'C:\Users\Administrator\Documents\OrHere-8\README.txt'
+'The text file is here, somehow...' | Out-File -FilePath 'C:\Users\Administrator\Documents\OrHere-9\README.txt'
+#get image from our gitlab repo
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Invoke-WebRequest -Headers @{"PRIVATE-TOKEN" = "PHCPYfhyhsG7a6vP-Hta"} `
+-Uri https://gitlab.com/api/v4/projects/27226596/repository/files/simple_image.jpg/raw?ref=main `
+-OutFile 'C:\Users\Administrator\Documents\OrHere-9\simple_image.jpg'
 #install file server role (for smb)
 Install-WindowsFeature File-Services
 #configure SMB share
-New-SmbShare -Name "LablabeeShare" -Path "C:\Users\Administrator\Documents\Share" -FullAccess "Everyone"
+#New-SmbShare -Name "LablabeeShare" -Path "C:\Users\Administrator\Documents\Share" -FullAccess "Everyone"
 #disable need to run Internet Explorer's first launch configuration
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value 2
-#allow ssh, needs openssh installed
+#allow ssh
 New-NetFirewallRule -Protocol TCP -LocalPort 22 -Direction Inbound -Action Allow -DisplayName SSH
+#install microsip portable
+New-Item -ItemType directory -Path 'C:\Program Files\Microsip'
+Invoke-WebRequest -Uri "https://www.microsip.org/download/MicroSIP-3.20.6.zip" -OutFile 'micro.zip'
+Add-Type -assembly "system.io.compression.filesystem"
+[io.compression.zipfile]::ExtractToDirectory("micro.zip", 'C:\Program Files\Microsip')
+Remove-Item 'micro.zip' -Recurse
 #notify heat
 $name= hostname
 $data= "{`"status`": `"SUCCESS`", `"reason`": `"$name`"}"
