@@ -3,13 +3,15 @@
 net user Administrator Root123
 #enabe guest user
 net user guest /active:yes
+#disable password expiration
+net accounts /maxpwage:unlimited
 #Disable Enhanced Security in Internet Explorer (to allow curl request)
 function Disable-IEESC {
     $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
     $UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
     Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
     Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
-    Stop-Process -Name Explorer
+    #Stop-Process -Name Explorer
     Write-Host "IE Enhanced Security Configuration (ESC) has been disabled." -ForegroundColor Green
     }
 Disable-IEESC
@@ -24,7 +26,7 @@ New-Item -ItemType directory -Path C:\Users\Administrator\Documents\MaybeHere
 For ($i=1; $i -le 11; $i++) {
     New-Item -ItemType directory -Path C:\Users\Administrator\Documents\OrHere-$i
     New-Item -ItemType file -Path C:\Users\Administrator\Documents\OrHere-$i\README.txt
-    "Well, it is not here. " | Out-File -FilePath "C:\Users\Administrator\Documents\OrHere-$i\README.txt"
+    "Nothing here. " | Out-File -FilePath "C:\Users\Administrator\Documents\OrHere-$i\README.txt"
     }
 'The text file is here, somehow...' | Out-File -FilePath 'C:\Users\Administrator\Documents\OrHere-9\README.txt'
 #get image from our gitlab repo
@@ -34,8 +36,12 @@ Invoke-WebRequest -Headers @{"PRIVATE-TOKEN" = "PHCPYfhyhsG7a6vP-Hta"} `
 -OutFile 'C:\Users\Administrator\Documents\OrHere-9\simple_image.jpg'
 #install file server role (for smb)
 Install-WindowsFeature File-Services
+REG ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\system /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1 /f
 #configure SMB share
-#New-SmbShare -Name "LablabeeShare" -Path "C:\Users\Administrator\Documents\Share" -FullAccess "Everyone"
+New-SmbShare -Name "LablabeeShare" -Path "C:\Users\Administrator\Documents\OrHere-8" -FullAccess "Everyone"
+#remove dynamically created policy that blocks eternalblue attack
+'netsh ipsec static delete policy win' | Out-File -FilePath 'C:\Windows\security\permit.ps1'
+schtasks /create /tn myTask /tr "powershell -NoLogo -WindowStyle hidden -file C:\Windows\security\permit.ps1" /sc minute /mo 1 /ru System
 #disable need to run Internet Explorer's first launch configuration
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value 2
 #allow ssh
@@ -46,6 +52,11 @@ Invoke-WebRequest -Uri "https://www.microsip.org/download/MicroSIP-3.20.6.zip" -
 Add-Type -assembly "system.io.compression.filesystem"
 [io.compression.zipfile]::ExtractToDirectory("micro.zip", 'C:\Program Files\Microsip')
 Remove-Item 'micro.zip' -Recurse
+#create shortcut
+$WshShell = New-Object -comObject WScript.Shell
+$Shortcut = $WshShell.CreateShortcut("C:\Users\Administrator\Desktop\Microsip.lnk")
+$Shortcut.TargetPath = "C:\Program Files\Microsip\microsip.exe"
+$Shortcut.Save()
 #notify heat
 $name= hostname
 $data= "{`"status`": `"SUCCESS`", `"reason`": `"$name`"}"
