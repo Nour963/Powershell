@@ -11,6 +11,7 @@ New-RDRemoteApp -CollectionName "Quick" -DisplayName "Desktop" -FilePath "C:\Win
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Install-PackageProvider -Name NuGet -Force
 Install-Module -Name PowerShellGet -Force
+#close powershell and repoen it
 Install-Module -Name RDWebClientManagement -Force -AcceptLicense
 Install-RDWebClientPackage
 $localIpAddress=((ipconfig | findstr [0-9].\.)[0]).Split()[-1]
