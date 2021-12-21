@@ -5,6 +5,8 @@ $fqdn = (echo "$hostt.example.com")
 New-RDSessionDeployment -ConnectionBroker $fqdn -WebAccessServer $fqdn -SessionHost $fqdn
 Add-RDServer -Server $fqdn -Role RDS-GATEWAY -ConnectionBroker $fqdn -GatewayExternalFqdn $fqdn
 New-RDSessionCollection -CollectionName "Quick" -SessionHost $fqdn -ConnectionBroker $fqdn
+$UserGroup =@("EXAMPLE\Domain Users","EXAMPLE\Administrator")
+Set-RDSessionCollectionConfiguration -CollectionName "Quick" -UserGroup $UserGroup
 New-RDRemoteApp -CollectionName "Quick" -DisplayName "Desktop" -FilePath "C:\Windows\System32\mstsc.exe"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Install-PackageProvider -Name NuGet -Force
